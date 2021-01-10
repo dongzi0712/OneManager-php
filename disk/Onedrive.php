@@ -282,13 +282,14 @@ class Onedrive {
         $data = '{"name":"' . $newname . '"}';
                 //echo $oldname;
         $result = $this->MSAPI('PATCH', $oldname, $data, $this->access_token);
-        return output($result['body'], $result['stat']);
+        return output(json_encode($this->files_format(json_decode($result['body'], true))), $result['stat']);
     }
     public function Delete($file) {
         $filename = spurlencode($file['name']);
         $filename = path_format($file['path'] . '/' . $filename);
                 //echo $filename;
         $result = $this->MSAPI('DELETE', $filename, '', $this->access_token);
+        return output(json_encode($this->files_format(json_decode($result['body'], true))), $result['stat']);
         return output($result['body'], $result['stat']);
     }
     public function Encrypt($folder, $passfilename, $pass) {
@@ -297,6 +298,7 @@ class Onedrive {
         $path1 = $folder['path'];
         if ($path1!='/'&&substr($path1, -1)=='/') $path1 = substr($path1, 0, -1);
         savecache('path_' . $path1 . '/?password', '', $this->disktag, 1);
+        return output(json_encode($this->files_format(json_decode($result['body'], true))), $result['stat']);
         return output($result['body'], $result['stat']);
     }
     public function Move($file, $folder) {
@@ -307,6 +309,7 @@ class Onedrive {
         $path2 = spurlencode($folder['path'], '/');
         if ($path2!='/'&&substr($path2, -1)=='/') $path2 = substr($path2, 0, -1);
         savecache('path_' . $path2, json_decode('{}', true), $this->disktag, 1);
+        return output(json_encode($this->files_format(json_decode($result['body'], true))), $result['stat']);
         return output($result['body'], $result['stat']);
     }
     public function Copy($file) {
@@ -335,6 +338,7 @@ class Onedrive {
             $data = '{ "name": "' . $newname . '" }';
             $result = $this->MSAPI('copy', $filename, $data, $this->access_token);
         }*/
+        return output(json_encode($this->files_format(json_decode($result['body'], true))), $result['stat']);
         return output($result['body'], $result['stat']);
     }
     public function Edit($file, $content) {
@@ -361,6 +365,7 @@ class Onedrive {
             $result = $this->MSAPI('children', $parent['path'], $data, $this->access_token);
         }
         //savecache('path_' . $path1, json_decode('{}',true), $_SERVER['disktag'], 1);
+        return output(json_encode($this->files_format(json_decode($result['body'], true))), $result['stat']);
         return output($result['body'], $result['stat']);
     }
 
@@ -798,37 +803,37 @@ class Onedrive {
 
     public function bigfileupload($path)
     {
-        if ($_GET['upbigfilename']!=''&&$_GET['filesize']>0) {
-            $tmp = splitlast($_GET['upbigfilename'], '/');
-            if ($tmp[1]!='') {
-                $fileinfo['name'] = $tmp[1];
-                $fileinfo['path'] = $tmp[0];
-            } else {
-                $fileinfo['name'] = $_GET['upbigfilename'];
-            }
-            $fileinfo['size'] = $_GET['filesize'];
-            $fileinfo['lastModified'] = $_GET['lastModified'];
-            $filename = spurlencode($_GET['upbigfilename'],'/');
-            if ($fileinfo['size']>10*1024*1024) {
-                $cachefilename = spurlencode( $fileinfo['path'] . '/.' . $fileinfo['lastModified'] . '_' . $fileinfo['size'] . '_' . $fileinfo['name'] . '.tmp', '/');
-                $getoldupinfo=$this->list_files(path_format($path . '/' . $cachefilename));
-                //echo json_encode($getoldupinfo, JSON_PRETTY_PRINT);
-                if (isset($getoldupinfo['file'])&&$getoldupinfo['size']<5120) {
-                    $getoldupinfo_j = curl('GET', $getoldupinfo['url']);
-                    $getoldupinfo = json_decode($getoldupinfo_j['body'], true);
-                    if ( json_decode( curl('GET', $getoldupinfo['uploadUrl'])['body'], true)['@odata.context']!='' ) return output($getoldupinfo_j['body'], $getoldupinfo_j['stat']);
-                }
-            }
-            $response = $this->MSAPI('createUploadSession', path_format($path . '/' . $filename), '{"item": { "@microsoft.graph.conflictBehavior": "fail" }}', $this->access_token);
-            if ($response['stat']<500) {
-                $responsearry = json_decode($response['body'],true);
-                if (isset($responsearry['error'])) return output($response['body'], $response['stat']);
-                $fileinfo['uploadUrl'] = $responsearry['uploadUrl'];
-                if ($fileinfo['size']>10*1024*1024) $this->MSAPI('PUT', path_format($path . '/' . $cachefilename), json_encode($fileinfo, JSON_PRETTY_PRINT), $this->access_token);
-            }
-            return output($response['body'], $response['stat']);
+        if ($_GET['upbigfilename']=='') return output('error: no file name', 400);
+        if (!is_numeric($_GET['filesize'])) return output('error: no file size', 400);
+
+        $tmp = splitlast($_GET['upbigfilename'], '/');
+        if ($tmp[1]!='') {
+            $fileinfo['name'] = $tmp[1];
+            $fileinfo['path'] = $tmp[0];
+        } else {
+            $fileinfo['name'] = $_GET['upbigfilename'];
         }
-        return output('error', 400);
+        $fileinfo['size'] = $_GET['filesize'];
+        $fileinfo['filelastModified'] = $_GET['filelastModified'];
+        $filename = spurlencode($_GET['upbigfilename'],'/');
+        if ($fileinfo['size']>10*1024*1024) {
+            $cachefilename = spurlencode( $fileinfo['path'] . '/.' . $fileinfo['filelastModified'] . '_' . $fileinfo['size'] . '_' . $fileinfo['name'] . '.tmp', '/');
+            $getoldupinfo=$this->list_files(path_format($path . '/' . $cachefilename));
+            //echo json_encode($getoldupinfo, JSON_PRETTY_PRINT);
+            if (isset($getoldupinfo['file'])&&$getoldupinfo['size']<5120) {
+                $getoldupinfo_j = curl('GET', $getoldupinfo['url']);
+                $getoldupinfo = json_decode($getoldupinfo_j['body'], true);
+                if ( json_decode( curl('GET', $getoldupinfo['uploadUrl'])['body'], true)['@odata.context']!='' ) return output($getoldupinfo_j['body'], $getoldupinfo_j['stat']);
+            }
+        }
+        $response = $this->MSAPI('createUploadSession', path_format($path . '/' . $filename), '{"item": { "@microsoft.graph.conflictBehavior": "fail" }}', $this->access_token);
+        if ($response['stat']<500) {
+            $responsearry = json_decode($response['body'],true);
+            if (isset($responsearry['error'])) return output($response['body'], $response['stat']);
+            $fileinfo['uploadUrl'] = $responsearry['uploadUrl'];
+            if ($fileinfo['size']>10*1024*1024) $this->MSAPI('PUT', path_format($path . '/' . $cachefilename), json_encode($fileinfo, JSON_PRETTY_PRINT), $this->access_token);
+        }
+        return output($response['body'], $response['stat']);
     }
 
     protected function MSAPI($method, $path, $data = '', $access_token)
