@@ -324,7 +324,8 @@ function updateEnvironment($Envs, $function_name, $Region, $Namespace, $SecretId
     }
     $tmp_env = array_filter($tmp_env, 'array_value_isnot_null'); // remove null. 清除空值
     //$tmp_env['Region'] = $Region;
-    ksort($tmp_env);
+    //ksort($tmp_env);
+    sortConfig($tmp_env);
 
     $i = 0;
     foreach ($tmp_env as $key1 => $value1) {

@@ -129,7 +129,7 @@ function setConfig($arr, $disktag = '')
         }
     }
     $envs = array_filter($envs, 'array_value_isnot_null');
-    ksort($envs);
+    //ksort($envs);
     $response = updateEnvironment($envs, $_SERVER['function_name'], $_SERVER['Region'], $_SERVER['namespace'], getConfig('SecretId'), getConfig('SecretKey'));
     WaitSCFStat($_SERVER['function_name'], $_SERVER['Region'], $_SERVER['namespace'], getConfig('SecretId'), getConfig('SecretKey'));
     return $response;
@@ -366,6 +366,7 @@ function copyFolder($from, $to)
 
 function updateEnvironment($Envs, $function_name, $Region, $Namespace, $SecretId, $SecretKey)
 {
+    sortConfig($Envs);
     // 获取当前代码并解压
     //$codeurl = json_decode(getfunctioncodeurl($function_name, $Region, $Namespace, $SecretId, $SecretKey), true)['Response']['Url'];
     //$codezip = '/tmp/oldcode.zip';
@@ -459,7 +460,7 @@ function SetbaseConfig($Envs, $function_name, $Region, $Namespace, $SecretId, $S
         $envs[$k] = $v;
     }
     $envs = array_filter($envs, 'array_value_isnot_null');
-    ksort($envs);
+    //ksort($envs);
     $response = updateEnvironment($envs, $function_name, $Region, $Namespace, $SecretId, $SecretKey);
     return $response;
 }

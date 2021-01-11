@@ -321,7 +321,8 @@ function updateEnvironment($Envs, $accountId, $region, $service_name, $function_
         $tmp_env[$key1] = $value1;
     }
     $tmp_env = array_filter($tmp_env, 'array_value_isnot_null'); // remove null. 清除空值
-    ksort($tmp_env);
+    //ksort($tmp_env);
+    sortConfig($tmp_env);
 
     $tmpdata['environmentVariables'] = $tmp_env;
     return FCAPI2016($config, 'PUT', json_encode($tmpdata));

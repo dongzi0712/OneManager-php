@@ -144,7 +144,7 @@ function setConfig($arr, $disktag = '')
         }
     }
     $envs = array_filter($envs, 'array_value_isnot_null');
-    ksort($envs);
+    //ksort($envs);
     $response = updateEnvironment($envs, getConfig('HW_urn'), getConfig('HW_key'), getConfig('HW_secret'));
     return $response;
 }
@@ -377,7 +377,7 @@ function copyFolder($from, $to)
 
 function updateEnvironment($Envs, $HW_urn, $HW_key, $HW_secret)
 {
-
+    sortConfig($Envs);
     //echo json_encode($Envs,JSON_PRETTY_PRINT);
     global $contextUserData;
     $source = '/tmp/code.zip';
@@ -456,7 +456,7 @@ function SetbaseConfig($Envs, $HW_urn, $HW_key, $HW_secret)
         $tmp_env[$k] = $v;
     }
     $tmp_env = array_filter($tmp_env, 'array_value_isnot_null');
-    ksort($tmp_env);
+    //ksort($tmp_env);
     $response = updateEnvironment($tmp_env, $HW_urn, $HW_key, $HW_secret);
     return $response;
 }

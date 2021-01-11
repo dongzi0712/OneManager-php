@@ -554,6 +554,26 @@ function filecache($disktag)
     return $cache;
 }
 
+function sortConfig(&$arr)
+{
+    ksort($arr);
+
+    $tags = explode('|', $arr['disktag']);
+    unset($arr['disktag']);
+    if ($tags[0]!='') {
+        foreach($tags as $tag) {
+            $disks[$tag] = $arr[$tag];
+            unset($arr[$tag]);
+        }
+        $arr['disktag'] = implode('|', $tags);
+        foreach($disks as $k => $v) {
+            $arr[$k] = $v;
+        }
+    }
+
+    return $arr;
+}
+
 function getconstStr($str)
 {
     global $constStr;
@@ -895,7 +915,9 @@ function adminform($name = '', $pass = '', $path = '')
 {
     $html = '<html><head><title>' . getconstStr('AdminLogin') . '</title><meta charset=utf-8></head>';
     if ($name!=''&&$pass!='') {
-        $html .= '<meta http-equiv="refresh" content="3;URL=' . $path . '"><body>' . getconstStr('LoginSuccess') . '</body></html>';
+        $html .= '<meta http-equiv="refresh" content="3;URL=' . $path . '">
+        <meta name=viewport content="width=device-width,initial-scale=1">
+        <body>' . getconstStr('LoginSuccess') . '</body></html>';
         $statusCode = 201;
         date_default_timezone_set('UTC');
         $header = [
@@ -907,6 +929,7 @@ function adminform($name = '', $pass = '', $path = '')
     }
     $statusCode = 401;
     $html .= '
+    <meta name=viewport content="width=device-width,initial-scale=1">
     <body>
 	<div>
 	  <center><h4>' . getconstStr('InputPassword') . '</h4>
@@ -1014,7 +1037,8 @@ function adminoperate($path)
         //if ($path1!='/'&&substr($path1, -1)=='/') $path1=substr($path1, 0, -1);
         savecache('path_' . $path1 . '/?password', '', $_SERVER['disktag'], 1);
         savecache('customTheme', '', '', 1);
-        return message('<meta http-equiv="refresh" content="2;URL=./">', getconstStr('RefreshCache'), 202);
+        return message('<meta http-equiv="refresh" content="2;URL=./">
+        <meta name=viewport content="width=device-width,initial-scale=1">', getconstStr('RefreshCache'), 202);
     }
     return $tmparr;
 }
@@ -2392,8 +2416,8 @@ function render_list($path = '', $files = '')
 </script>';
     }
 
-    $tmp = splitfirst($html, '<head>');
-    $html = $tmp[0] . '<head>' . $authinfo . $tmp[1];
+    $tmp = splitfirst($html, '</title>');
+    $html = $tmp[0] . '</title>' . $authinfo . $tmp[1];
     if (isset($_SERVER['Set-Cookie'])) return output($html, $statusCode, [ 'Set-Cookie' => $_SERVER['Set-Cookie'], 'Content-Type' => 'text/html' ]);
-    return output($html,$statusCode);
+    return output($html, $statusCode);
 }
